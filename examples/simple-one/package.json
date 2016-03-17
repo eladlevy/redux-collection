@@ -1,0 +1,35 @@
+{
+  "name": "redux-collection",
+  "version": "0.1.0",
+  "description": "A robust redux collection data structure that easily syncs with a RESTful API",
+  "main": "./lib/index.js",
+  "scripts": {
+    "build:lib": "babel src --out-dir lib",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example": "npm run build:lib && rm examples/simple-one/output.js && babel examples/simple-one --out-file examples/simple-one/output.js && node examples/simple-one/output.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eladlevy/redux-collection.git"
+  },
+  "keywords": [
+    "redux",
+    "collection",
+    "rest",
+    "restful",
+    "nested",
+    "state"
+  ],
+  "author": "Elad Levy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/eladlevy/redux-collection/issues"
+  },
+  "homepage": "https://github.com/eladlevy/redux-collection#readme",
+  "dependencies": {
+    "react": "^0.14.7",
+    "react-dom": "^0.14.7",
+    "react-redux": "^4.4.1",
+    "redux": "^3.3.1"
+  }
+}
