@@ -4,8 +4,10 @@
   "description": "A robust redux collection data structure that easily syncs with a RESTful API",
   "main": "./lib/index.js",
   "scripts": {
+    "build": "npm run build:lib && npm run build:umd",
     "build:lib": "babel src --out-dir lib",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build:umd": "NODE_ENV=development webpack",
     "example": "npm run build:lib && rm examples/simple-one/output.js && babel examples/simple-one --out-file examples/simple-one/output.js && node examples/simple-one/output.js"
   },
   "files": [
