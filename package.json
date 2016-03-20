@@ -1,6 +1,6 @@
 {
   "name": "redux-collection",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A robust redux collection data structure that easily syncs with a RESTful API",
   "main": "./lib/index.js",
   "scripts": {
