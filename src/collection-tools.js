@@ -30,7 +30,7 @@ export function createCollections(collectionsMap) {
         collectionEntities[collectionName] = entityReducerCreator({types: buildConstants(collectionName), collectionName});
     });
 
-    return combineReducers({entities: generalEntitiesReducerCreator(collectionEntities), collections: combineReducers(collectionReducers)});
+    return combineReducers({entities: generalEntitiesReducerCreator(collectionEntities), selectedEntities: combineReducers(collectionReducers)});
 }
 
 function denormalize(bag, schema, id) {
@@ -58,7 +58,6 @@ function denormalize(bag, schema, id) {
 
     for (let relaionKey of relationKeys) {
         let relationId = normalizedEntity[relaionKey];
-        let relationSchema = schema[relaionKey];
         let cachedValue;
 
         Object.defineProperty(
@@ -80,10 +79,11 @@ function denormalize(bag, schema, id) {
     return instance
 }
 
-export function denormalizeCollection({ entities, collections }, collectionName) {
+export function denormalizeCollection({ collections }, collectionName) {
+    const {entities, selectedEntities} = collections;
     const { schema } = collectionsProps[collectionName];
-    const collection = collections[collectionName];
-    return denormalize(entities,arrayOf(schema), collection.ids);
+    const returnedCollection = selectedEntities[collectionName];
+    return denormalize(entities,arrayOf(schema), returnedCollection.ids);
 }
 
 export const {

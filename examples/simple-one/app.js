@@ -1,9 +1,9 @@
 import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
 import { connect, Provider } from 'react-redux';
-import { createStore } from 'redux';
+import { createStore, combineReducers } from 'redux';
 
-import {createCollections, denormalizeCollection, addEntity, removeEntity, updateEntity, resetEntity} from '../../src/collection-tools';
+import { createCollections, denormalizeCollection, addEntity, removeEntity, updateEntity, resetEntity } from '../../src/collection-tools';
 import { Schema, arrayOf } from 'normalizr/lib';
 const test = new Schema('positions');
 const users = new Schema('users');
@@ -13,13 +13,13 @@ test.define({
 
 });
 
-let store = createStore(createCollections(
+let store = createStore(combineReducers({collections: createCollections(
     {
         test: {
                 schema: test
             },
         companies: {}
-    })
+    })})
 );
 
 class ExampleComponent extends Component {
