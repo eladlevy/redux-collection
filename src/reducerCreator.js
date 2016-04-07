@@ -1,14 +1,17 @@
-import merge from 'lodash.merge';
+import merge from 'lodash/object/merge';
 
-export function reducerCreator({ types, collectionName }) {
-    if (!types.every(t => typeof t === 'string')) {
-        throw new Error('Expected types to be strings.')
-    }
+export function reducerCreator({ types: {
+    requestType, 
+    successType, 
+    failureType, 
+    addType, 
+    removeType, 
+    resetType
+}, collectionName }) {
+    
     if (typeof collectionName !== 'string') {
         throw new Error('Expected collectionType to be a string.')
     }
-
-    const [ requestType, successType, failureType , addType, removeType, updateType, resetType ] = types;
 
     return function collectionReducer(state = {
         isFetching: false,
@@ -22,7 +25,7 @@ export function reducerCreator({ types, collectionName }) {
             case successType:
                 return merge({}, state, {
                     isFetching: false,
-                    ids: union(action.payload.result, state.ids)
+                    ids: [...action.payload.result]
                 });
             case failureType:
                 return merge({}, state, {
@@ -30,14 +33,11 @@ export function reducerCreator({ types, collectionName }) {
                 });
             case addType:
                 return merge({}, state, {
-                    ids:  [...state.ids, action.id]
+                    ids:  [...state.ids, ...action.payload.result]
                 });
             case removeType:
                 return Object.assign({}, state, {
-                    ids: [
-                        ...state.ids.slice(0, state.ids.indexOf(action.id)),
-                        ...state.ids.slice(state.ids.indexOf(action.id + 1))
-                    ]
+                    ids: state.ids.filter(id => id !== action.meta.id)
                 });
             case resetType:
                 return Object.assign({}, state, {
@@ -50,27 +50,40 @@ export function reducerCreator({ types, collectionName }) {
     }
 }
 
-export function entityReducerCreator({types, collectionName}) {
-    const [ requestType, successType, failureType , addType, removeType, updateType,resetType ] = types;
-    if (typeof collectionName !== 'string') {
-        throw new Error('Expected collectionType to be a string.')
+export function entityReducerCreator({types: {
+    requestEntityType,
+    requestEntitySuccessType,
+    requestEntityFailureType
+}, entityName, defaultState = {}}) {
+    if (typeof entityName !== 'string') {
+        throw new Error('Expected entityName to be a string.')
     }
 
     return function entityReducer(state = {}, action) {
         switch (action.type) {
-            case addType:
+            case requestEntityType:
                 return {
                     ...state,
-                    [action.id]: {
-                        ...action.payload.entities[collectionName][action.id]
+                    [action.meta.id]: {
+                        ...state[action.meta.id],
+                        isFetching: true
                     }
                 };
-            case updateType:
+            case requestEntitySuccessType:
                 return {
                     ...state,
-                    [action.id]: {
-                        ...state[action.id],
-                        ...action.payload.entities[collectionName][action.id]
+                    [action.meta.id]: {
+                        ...state[action.meta.id],
+                        isFetching: false,
+                        ...action.payload.entities[entityName][action.meta.id]
+                    }
+                };
+            case requestEntityFailureType:
+                return {
+                    ...state,
+                    [action.meta.id]: {
+                        ...state[action.meta.id],
+                        isFetching: false,
                     }
                 };
         }
