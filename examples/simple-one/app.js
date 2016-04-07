@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { connect, Provider } from 'react-redux';
 import { createStore, combineReducers } from 'redux';
 
-import { createCollections, denormalizeCollection, addEntity, removeEntity, updateEntity, resetEntity } from '../../src/collection-tools';
+import { createCollections, denormalizeCollection, requestCollectionSuccess, addEntity, removeEntity, updateEntity, resetEntity } from '../../src/collection-tools';
 import { Schema, arrayOf } from 'normalizr/lib';
 const test = new Schema('positions');
 const users = new Schema('users');
@@ -44,10 +44,11 @@ ReactDOM.render((<Provider store={store}>
     </Provider>
 ), document.getElementById('container'));
 
+
+store.dispatch(requestCollectionSuccess('test', [{ id:2, name: ' Roy', user: {id:99, firstName: 'I am a user!'}}, {id:12, name:' Blah'}]));
 store.dispatch(addEntity('test', { id:2, name: ' Roy', user: {id:99, firstName: 'I am a user!'}}));
-store.dispatch(addEntity('test', {id:2, name:' Roy'}));
 store.dispatch(addEntity('test', {id:12, name:' Blah'}));
-store.dispatch(addEntity('test', {id:31, name:' Josh'}));
+store.dispatch(addEntity('test', {name:' Josh'}));
 store.dispatch(addEntity('companies', {id:999, type: 'high School'}));
 store.dispatch(updateEntity('test', {id:12, name:'Elad'}));
 store.dispatch(updateEntity('companies', {id:999, type: 'Middle School'}));
