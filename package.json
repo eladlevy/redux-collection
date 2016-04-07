@@ -22,6 +22,7 @@
   "keywords": [
     "redux",
     "collection",
+    "collections",
     "rest",
     "restful",
     "nested",
@@ -35,6 +36,7 @@
   "homepage": "https://github.com/eladlevy/redux-collection#readme",
   "dependencies": {
     "lodash.merge": "^4.3.2",
+    "lodash.uniqueid": "^4.0.0",
     "lodash.without": "^4.1.1",
     "normalizr": "^2.0.0",
     "redux": "^3.3.1"
