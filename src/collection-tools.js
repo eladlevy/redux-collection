@@ -7,16 +7,26 @@ import { actionCreator, actionPrefix } from './actionCreator';
 
 function buildConstants(collectionName) {
     const uppercasedCollectionName = collectionName.toUpperCase();
+    
+    return {
+        requestType: `${actionPrefix}/REQUEST_${uppercasedCollectionName}`,
+        successType: `${actionPrefix}/REQUEST_SUCCESS_${uppercasedCollectionName}`,
+        failureType: `${actionPrefix}/REQUEST_FAILURE_${uppercasedCollectionName}`,
+        addType: `${actionPrefix}/ADD_${uppercasedCollectionName}`,
+        removeType: `${actionPrefix}/REMOVE_${uppercasedCollectionName}`,
+        updateType: `${actionPrefix}/UPDATE_${uppercasedCollectionName}`,
+        resetType: `${actionPrefix}/RESET_${uppercasedCollectionName}`
+    };
+}
 
-    return [
-        `${actionPrefix}/REQUEST_${uppercasedCollectionName}`,
-        `${actionPrefix}/REQUEST_${uppercasedCollectionName}_SUCCESS`,
-        `${actionPrefix}/REQUEST_${uppercasedCollectionName}_FAILURE`,
-        `${actionPrefix}/ADD_${uppercasedCollectionName}`,
-        `${actionPrefix}/REMOVE_${uppercasedCollectionName}`,
-        `${actionPrefix}/UPDATE_${uppercasedCollectionName}`,
-        `${actionPrefix}/RESET_${uppercasedCollectionName}`
-    ];
+function buildEntityConstants(entityName) {
+    const uppercasedEntityName = entityName.toUpperCase();
+
+    return {
+        requestEntityType: `${actionPrefix}/REQUEST_ENTITY_${uppercasedEntityName}`,
+        requestEntitySuccessType: `${actionPrefix}/REQUEST_ENTITY_SUCCESS_${uppercasedEntityName}`,
+        requestEntityFailure: `${actionPrefix}/REQUEST_ENTITY_FAILURE_${uppercasedEntityName}`
+    };
 }
 
 export let collectionsProps = {};
@@ -26,13 +36,15 @@ export function createCollections(collectionsMap) {
     let collectionEntities = {};
     collectionsProps = Object.assign({}, collectionsProps, collectionsMap);
     Object.keys(collectionsMap).map((collectionName) => {
+        const {schema = new Schema(collectionName)} = collectionsMap[collectionName];
+        const entityName = schema.getKey();
         collectionReducers[collectionName] = reducerCreator({types: buildConstants(collectionName), collectionName});
-        collectionEntities[collectionName] = entityReducerCreator({types: buildConstants(collectionName), collectionName});
+        collectionEntities[entityName] = entityReducerCreator({types: buildEntityConstants(entityName), entityName, defaultState: collectionsMap[collectionName].defaultState});
     });
-
     return combineReducers({entities: generalEntitiesReducerCreator(collectionEntities), selectedEntities: combineReducers(collectionReducers)});
 }
 
+//Inspired from https://github.com/elado/normalizr/blob/24e496c4057765ff7b0f7a9f8b633ae52d593b40/src/denormalize.js
 function denormalize(bag, schema, id) {
     if (!id) return null;
 
@@ -79,16 +91,51 @@ function denormalize(bag, schema, id) {
     return instance
 }
 
+export function getCollection({collections} , collectionName) {
+    if (typeof collectionName !== 'string') {
+        throw new Error('Expected collectionName to be a string.');
+    }
+    const {entities, selectedEntities} = collections;
+    const { schema } = collectionsProps[collectionName];
+    const collectionEntities = entities[schema.getKey()];
+    const returnedCollection = selectedEntities[collectionName].ids.map((id)=> collectionEntities[id]);
+    return {isFetching: selectedEntities[collectionName].isFetching, entities: returnedCollection};
+}
+
+
+//Helper function to denormalize entities or collections. Use with caution.
 export function denormalizeCollection({ collections }, collectionName) {
+    if (typeof collectionName !== 'string') {
+        throw new Error('Expected collectionName to be a string.');
+    }
     const {entities, selectedEntities} = collections;
     const { schema } = collectionsProps[collectionName];
     const returnedCollection = selectedEntities[collectionName];
-    return denormalize(entities,arrayOf(schema), returnedCollection.ids);
+    return denormalize(entities, arrayOf(schema || new Schema(collectionName)), returnedCollection.ids);
+}
+
+export function denormalizeEntity({ collections }, collectionName, entityId) {
+    if (typeof collectionName !== 'string') {
+        throw new Error('Expected collectionName to be a string.');
+    }
+    
+    if (!entityId) {
+        throw new Error('Expected entityId to be defined');
+    }
+    const {entities, selectedEntities} = collections;
+    const { schema } = collectionsProps[collectionName];
+    return denormalize(entities, schema || new Schema(collectionName), entityId);
 }
 
 export const {
     addEntity,
     removeEntity,
     updateEntity,
-    resetEntity
+    resetEntity,
+    requestCollection,
+    requestCollectionSuccess,
+    requestCollectionFailure,
+    requestEntity,
+    requestEntitySuccess,
+    requestEntityFailure
     } = actionCreator();
