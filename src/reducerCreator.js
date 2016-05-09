@@ -1,14 +1,14 @@
 import merge from 'lodash/object/merge';
 
 export function reducerCreator({ types: {
-    requestType, 
-    successType, 
-    failureType, 
-    addType, 
-    removeType, 
+    requestType,
+    successType,
+    failureType,
+    addType,
+    removeType,
     resetType
 }, collectionName }) {
-    
+
     if (typeof collectionName !== 'string') {
         throw new Error('Expected collectionType to be a string.')
     }
@@ -19,20 +19,20 @@ export function reducerCreator({ types: {
     }, action) {
         switch (action.type) {
             case requestType:
-                return merge({}, state, {
+                return Object.assign({}, state, {
                     isFetching: true
                 });
             case successType:
-                return merge({}, state, {
+                return Object.assign({}, state, {
                     isFetching: false,
                     ids: [...action.payload.result]
                 });
             case failureType:
-                return merge({}, state, {
+                return Object.assign({}, state, {
                     isFetching: false
                 });
             case addType:
-                return merge({}, state, {
+                return Object.assign({}, state, {
                     ids:  [...state.ids, ...action.payload.result]
                 });
             case removeType:
@@ -83,9 +83,17 @@ export function entityReducerCreator({types: {
                     ...state,
                     [action.meta.id]: {
                         ...state[action.meta.id],
-                        isFetching: false,
+                        isFetching: false
                     }
                 };
+            // case updateType:
+            //     return {
+            //         ...state,
+            //         [action.meta.id]: {
+            //             ...state[action.meta.id],
+            //             ...action.payload.entities[collectionName][action.meta.id]
+            //         }
+            //     };
         }
         return state;
     }
