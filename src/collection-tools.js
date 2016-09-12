@@ -1,20 +1,19 @@
 import { combineReducers } from 'redux';
 import { Schema, arrayOf } from 'normalizr';
 import IterableSchema from 'normalizr/lib/IterableSchema';
-import UnionSchema from 'normalizr/lib/UnionSchema';
 import { reducerCreator, entityReducerCreator, generalEntitiesReducerCreator } from './reducerCreator';
 import { actionCreator, actionPrefix } from './actionCreator';
 
 function buildConstants(collectionName) {
     const uppercasedCollectionName = collectionName.toUpperCase();
-    
+
     return {
         requestType: `${actionPrefix}/REQUEST_${uppercasedCollectionName}`,
         successType: `${actionPrefix}/REQUEST_SUCCESS_${uppercasedCollectionName}`,
         failureType: `${actionPrefix}/REQUEST_FAILURE_${uppercasedCollectionName}`,
         addType: `${actionPrefix}/ADD_${uppercasedCollectionName}`,
+        replaceType: `${actionPrefix}/REPLACE_${uppercasedCollectionName}`,
         removeType: `${actionPrefix}/REMOVE_${uppercasedCollectionName}`,
-        updateType: `${actionPrefix}/UPDATE_${uppercasedCollectionName}`,
         resetType: `${actionPrefix}/RESET_${uppercasedCollectionName}`
     };
 }
@@ -25,7 +24,9 @@ function buildEntityConstants(entityName) {
     return {
         requestEntityType: `${actionPrefix}/REQUEST_ENTITY_${uppercasedEntityName}`,
         requestEntitySuccessType: `${actionPrefix}/REQUEST_ENTITY_SUCCESS_${uppercasedEntityName}`,
-        requestEntityFailure: `${actionPrefix}/REQUEST_ENTITY_FAILURE_${uppercasedEntityName}`
+        requestEntityFailure: `${actionPrefix}/REQUEST_ENTITY_FAILURE_${uppercasedEntityName}`,
+        updateType: `${actionPrefix}/UPDATE_${uppercasedEntityName}`,
+        bulkUpdateType: `${actionPrefix}/BULK_UPDATE_${uppercasedEntityName}`,
     };
 }
 
@@ -36,9 +37,9 @@ export function createCollections(collectionsMap) {
     let collectionEntities = {};
     collectionsProps = Object.assign({}, collectionsProps, collectionsMap);
     Object.keys(collectionsMap).map((collectionName) => {
-        const {schema = new Schema(collectionName)} = collectionsMap[collectionName];
+        const {schema = new Schema(collectionName), reducer} = collectionsMap[collectionName];
         const entityName = schema.getKey();
-        collectionReducers[collectionName] = reducerCreator({types: buildConstants(collectionName), collectionName});
+        collectionReducers[collectionName] = reducerCreator({types: buildConstants(collectionName), collectionName, reducer});
         collectionEntities[entityName] = entityReducerCreator({types: buildEntityConstants(entityName), entityName, defaultState: collectionsMap[collectionName].defaultState});
     });
     return combineReducers({entities: generalEntitiesReducerCreator(collectionEntities), selectedEntities: combineReducers(collectionReducers)});
@@ -53,8 +54,6 @@ function denormalize(bag, schema, id) {
     if (schema.constructor === Schema) {
         const type = schema.getKey();
         normalizedEntity = bag[type] && bag[type][id]
-    } else if (schema.constructor === UnionSchema) {
-        normalizedEntity = bag[id.schema] && bag[id.schema][id.id]
     } else if (schema.constructor === IterableSchema) {
         const itemSchema = schema.getItemSchema();
         return id.map(i => denormalize(bag, itemSchema, i))
@@ -118,7 +117,7 @@ export function denormalizeEntity({ collections }, collectionName, entityId) {
     if (typeof collectionName !== 'string') {
         throw new Error('Expected collectionName to be a string.');
     }
-    
+
     if (!entityId) {
         throw new Error('Expected entityId to be defined');
     }
@@ -131,6 +130,8 @@ export const {
     addEntity,
     removeEntity,
     updateEntity,
+    bulkUpdateEntities,
+    replaceEntity,
     resetEntity,
     requestCollection,
     requestCollectionSuccess,
@@ -138,4 +139,4 @@ export const {
     requestEntity,
     requestEntitySuccess,
     requestEntityFailure
-    } = actionCreator();
+} = actionCreator();

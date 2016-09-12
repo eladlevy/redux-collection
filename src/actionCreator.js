@@ -1,6 +1,6 @@
 import { collectionsProps } from './collection-tools';
 import { normalize, Schema, arrayOf} from 'normalizr';
-import uniqueId from 'lodash/utility/uniqueId';
+import _ from 'lodash';
 
 export const actionPrefix = 'redux-collection';
 
@@ -12,12 +12,12 @@ function constBuilder(actionType, collectionName) {
 
 export function actionCreator() {
     const actionWrapper = function(actionType, entityAction) {
-        return function ({collectionName, data, getString}) {
-            if (typeof collectionName !== 'string') {
+        return function ({collectionName, data, getString, entityName, meta={}}) {
+            if (typeof collectionName !== 'string' && !entityAction) {
                 throw new Error('Expected collectionName to be a string.');
             }
 
-            const { schema = new Schema(collectionName) } = collectionsProps[collectionName];
+            const { schema = new Schema(collectionName || entityName) } = collectionsProps[collectionName] || {};
             const actionString = constBuilder(actionType, entityAction ? schema.getKey() : collectionName);
 
             if (getString) return actionString;
@@ -29,7 +29,7 @@ export function actionCreator() {
                     payload = normalize(data, arrayOf(schema));
                 } else {
                     if (!data.id) {
-                        data.id = uniqueId('client_');
+                        data.id = _.uniqueId('client_');
                     }
                     id = data.id;
                     payload = normalize(data, schema);
@@ -38,9 +38,17 @@ export function actionCreator() {
 
             return {
                 type: actionString,
-                meta: {id},
+                meta: Object.assign({}, {id}, meta),
                 payload
             };
+        }
+    };
+
+    const replaceEntityActionWrapper = function(actionType, entityAction) {
+        const action = actionWrapper(actionType, entityAction);
+        return function ({collectionName, data, getString}, replaceId) {
+            if (!getString && !replaceId) throw new Error('Expected replaceId to be defined');
+            return action({collectionName, data, getString, meta: { replaceId: parseInt(replaceId)}});
         }
     };
 
@@ -48,6 +56,8 @@ export function actionCreator() {
         addEntity: actionWrapper('add'),
         removeEntity: actionWrapper('remove'),
         updateEntity: actionWrapper('update'),
+        replaceEntity: replaceEntityActionWrapper('replace'),
+        bulkUpdateEntities: actionWrapper('bulk_update', true),
         resetEntity: actionWrapper('reset'),
 
         //collection network events
